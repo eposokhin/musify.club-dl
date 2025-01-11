@@ -1,0 +1,138 @@
+import * as cheerio from 'cheerio'
+import { parseArgs } from 'node:util'
+import { mkdir, open } from 'node:fs/promises'
+import { URL } from 'node:url'
+import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
+
+const config = {
+  options: {
+    help: {
+      type: 'boolean',
+      short: 'h'
+    },
+    path: {
+      type: 'string',
+      short: 'p',
+      default: `${process.env.HOME}/Music`
+    },
+    track: {
+      type: 'string',
+      short: 't'
+    },
+    simultaneous: {
+      type: 'string',
+      short: 's',
+      default: '5'
+    }
+  },
+  allowPositionals: true
+}
+
+const cleanUpSymbols = inputString => inputString.replace(/[:/"*<>|?]/g, '')
+
+function getLinksAndTags (html, domain) {
+  const $ = cheerio.load(html)
+
+  const [album, artist = 'VA'] = $('h1')
+    .text()
+    .trim()
+    .split(' - ', 2)
+    .reverse()
+  const tracksData = []
+  const $tracks = $('.playlist__item')
+  const coverURL = $('.album-img').attr('data-src')
+
+  $tracks.each((index, element) => {
+    let trackNo = $(element)
+      .find('.playlist__position')
+      .text()
+      .trim()
+    if (trackNo.length < 2) trackNo = '0' + trackNo
+
+    tracksData.push({
+      url: `https://${domain}${$(element)
+                .find('.playlist__control.play')
+                .attr('data-url')}`,
+      trackNo,
+      title: $(element)
+        .find('.playlist__details a.strong')
+        .text()
+        .trim(),
+      artist,
+      album
+    })
+  })
+
+  return { tracksData, coverURL }
+}
+
+async function prepareAlbumDir (path) {
+  const newDir = await mkdir(path, { recursive: true })
+  if (!newDir) return
+  console.log(`Created ${newDir}`)
+}
+
+async function downloadFile (url, filename) {
+  const res = await fetch(url)
+
+  if (res.status !== 200) {
+    console.log(`The file ${filename} cannot be downloaded`)
+    return
+  }
+  console.log(`Start downloading: ${filename}`)
+
+  const filehandle = await open(filename, 'wx')
+
+  const writer = filehandle.createWriteStream()
+
+  await pipeline(res.body, Readable.fromWeb, writer)
+  await filehandle.close()
+  console.log(`Finished: ${filename}`)
+}
+
+async function downloadTracks (tracks, path, simNum) {
+  if (tracks.length === 0) return
+  const toDownload = tracks.slice(0, simNum)
+
+  const pending = toDownload.map(async track => {
+    const filename = `${path}/${track.trackNo} - ${track.title}.mp3`
+    await downloadFile(track.url, filename)
+  })
+
+  await Promise.allSettled(pending)
+
+  return downloadTracks(tracks.slice(simNum), path, simNum)
+}
+
+try {
+  const parsedArgs = parseArgs(config)
+  const {
+    path,
+    simultaneous
+  } = parsedArgs.values
+
+  const albumURL = parsedArgs.positionals[0]
+
+  const domain = new URL(albumURL).hostname
+
+  const res = await fetch(albumURL)
+  const body = await res.text()
+  const { tracksData, coverURL } = getLinksAndTags(body, domain)
+
+  const tracksDateCleaned = tracksData.map(track => {
+    return {
+      ...track,
+      title: cleanUpSymbols(track.title),
+      artist: cleanUpSymbols(track.artist),
+      album: cleanUpSymbols(track.album)
+    }
+  })
+
+  const albumPath = `${path}/${tracksDateCleaned[0].artist}/${tracksDateCleaned[0].album}`
+  console.log(albumPath)
+  await prepareAlbumDir(albumPath)
+  await downloadTracks(tracksDateCleaned, albumPath, +simultaneous)
+} catch (error) {
+  console.error(error.message)
+}
