@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio'
 import { parseArgs } from 'node:util'
-import { mkdir, open } from 'node:fs/promises'
+import { mkdir, open, rm } from 'node:fs/promises'
 import { URL } from 'node:url'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
@@ -76,15 +76,15 @@ async function prepareAlbumDir(path) {
 async function downloadFile(url, filename) {
     let filehandle
     try {
+        filehandle = await open(filename, 'wx')
+        const writer = filehandle.createWriteStream()
+
         const res = await fetch(url)
         if (!res.ok) {
             console.warn(`Server responds with status ${res.status}. The file at ${url} cannot be downloaded`)
             return
         }
 
-        filehandle = await open(filename, 'wx')
-        const writer = filehandle.createWriteStream()
-        
         console.info(`Start downloading: ${url}`)
 
         await pipeline(res.body, Readable.fromWeb, writer)
@@ -92,6 +92,7 @@ async function downloadFile(url, filename) {
     } catch (error) {
         if (error.cause?.code === 'ENOTFOUND') {
             console.warn(`${url} not found`)
+            rm(filename)
         } else if (error.code === 'EEXIST') {
             console.warn(`${filename} exist. Skipping`)
         } else {
