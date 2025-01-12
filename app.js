@@ -76,14 +76,15 @@ async function prepareAlbumDir(path) {
 async function downloadFile(url, filename) {
     let filehandle
     try {
-        filehandle = await open(filename, 'wx')
-        const writer = filehandle.createWriteStream()
-
         const res = await fetch(url)
         if (!res.ok) {
             console.warn(`Server responds with status ${res.status}. The file at ${url} cannot be downloaded`)
             return
         }
+
+        filehandle = await open(filename, 'wx')
+        const writer = filehandle.createWriteStream()
+        
         console.info(`Start downloading: ${url}`)
 
         await pipeline(res.body, Readable.fromWeb, writer)
