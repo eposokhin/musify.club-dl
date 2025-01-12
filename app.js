@@ -16,7 +16,7 @@ const config = {
             short: 'p',
             default: `${process.env.HOME}/Music`
         },
-        track: {
+        trackNumbers: {
             type: 'string',
             short: 't'
         },
@@ -121,7 +121,8 @@ async function downloadTracks(tracks, path, simNum) {
 const parsedArgs = parseArgs(config)
 const {
     path,
-    simultaneous
+    simultaneous,
+    trackNumbers
 } = parsedArgs.values
 
 const albumURL = parsedArgs.positionals[0]
@@ -132,7 +133,7 @@ const res = await fetch(albumURL)
 const body = await res.text()
 const { tracksData, coverURL } = getLinksAndTags(body, domain)
 
-const tracksDateCleaned = tracksData.map(track => {
+const tracksDataCleaned = tracksData.map(track => {
     return {
         ...track,
         title: cleanUpSymbols(track.title),
@@ -141,7 +142,16 @@ const tracksDateCleaned = tracksData.map(track => {
     }
 })
 
-const albumPath = `${path}/${tracksDateCleaned[0].artist}/${tracksDateCleaned[0].album}`
-console.log(albumPath)
+const albumPath = `${path}/${tracksDataCleaned[0].artist}/${tracksDataCleaned[0].album}`
+
+const filterTracks = tracks => tracks
+    .filter(track => trackNumbers
+        .split(',')
+        .map(i => parseInt(i))
+        .includes(parseInt(track.trackNo))
+    )
+
+const tracksToDownload = trackNumbers ? filterTracks(tracksDataCleaned) : tracksDataCleaned
+
 await prepareAlbumDir(albumPath)
-await downloadTracks(tracksDateCleaned, albumPath, +simultaneous)
+await downloadTracks(tracksToDownload, albumPath, +simultaneous)
