@@ -129,9 +129,9 @@ const albumURL = parsedArgs.positionals[0]
 
 const domain = new URL(albumURL).hostname
 
-const res = await fetch(albumURL)
-const body = await res.text()
-const { tracksData, coverURL } = getLinksAndTags(body, domain)
+const siteResponse = await fetch(albumURL)
+const albumPage = await siteResponse.text()
+const { tracksData, coverURL } = getLinksAndTags(albumPage, domain)
 
 const tracksDataCleaned = tracksData.map(track => {
     return {
