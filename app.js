@@ -82,6 +82,7 @@ async function downloadFile(url, filename) {
         const res = await fetch(url)
         if (!res.ok) {
             console.warn(`Server responds with status ${res.status}. The file at ${url} cannot be downloaded`)
+            await rm(filename)
             return
         }
 
@@ -92,7 +93,7 @@ async function downloadFile(url, filename) {
     } catch (error) {
         if (error.cause?.code === 'ENOTFOUND') {
             console.warn(`${url} not found`)
-            rm(filename)
+            await rm(filename)
         } else if (error.code === 'EEXIST') {
             console.warn(`${filename} exist. Skipping`)
         } else {
