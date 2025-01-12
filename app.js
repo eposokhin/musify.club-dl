@@ -115,34 +115,30 @@ async function downloadTracks(tracks, path, simNum) {
     return downloadTracks(tracks.slice(simNum), path, simNum)
 }
 
-try {
-    const parsedArgs = parseArgs(config)
-    const {
-        path,
-        simultaneous
-    } = parsedArgs.values
+const parsedArgs = parseArgs(config)
+const {
+    path,
+    simultaneous
+} = parsedArgs.values
 
-    const albumURL = parsedArgs.positionals[0]
+const albumURL = parsedArgs.positionals[0]
 
-    const domain = new URL(albumURL).hostname
+const domain = new URL(albumURL).hostname
 
-    const res = await fetch(albumURL)
-    const body = await res.text()
-    const { tracksData, coverURL } = getLinksAndTags(body, domain)
+const res = await fetch(albumURL)
+const body = await res.text()
+const { tracksData, coverURL } = getLinksAndTags(body, domain)
 
-    const tracksDateCleaned = tracksData.map(track => {
-        return {
-            ...track,
-            title: cleanUpSymbols(track.title),
-            artist: cleanUpSymbols(track.artist),
-            album: cleanUpSymbols(track.album)
-        }
-    })
+const tracksDateCleaned = tracksData.map(track => {
+    return {
+        ...track,
+        title: cleanUpSymbols(track.title),
+        artist: cleanUpSymbols(track.artist),
+        album: cleanUpSymbols(track.album)
+    }
+})
 
-    const albumPath = `${path}/${tracksDateCleaned[0].artist}/${tracksDateCleaned[0].album}`
-    console.log(albumPath)
-    await prepareAlbumDir(albumPath)
-    await downloadTracks(tracksDateCleaned, albumPath, +simultaneous)
-} catch (error) {
-    console.error(error.message)
-}
+const albumPath = `${path}/${tracksDateCleaned[0].artist}/${tracksDateCleaned[0].album}`
+console.log(albumPath)
+await prepareAlbumDir(albumPath)
+await downloadTracks(tracksDateCleaned, albumPath, +simultaneous)
