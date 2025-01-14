@@ -97,6 +97,7 @@ async function downloadFile(url, filename) {
         } else if (error.code === 'EEXIST') {
             console.warn(`${filename} exist. Skipping`)
         } else {
+            await rm(filename)
             throw error
         }
     } finally {
@@ -113,7 +114,7 @@ async function downloadTracks(tracks, path, simNum) {
         await downloadFile(track.url, filename)
     })
 
-    await Promise.allSettled(pending)
+    await Promise.all(pending)
 
     return downloadTracks(tracks.slice(simNum), path, simNum)
 }
@@ -155,3 +156,4 @@ const tracksToDownload = trackNumbers ? filterTracks(tracksDataCleaned) : tracks
 
 await prepareAlbumDir(albumPath)
 await downloadTracks(tracksToDownload, albumPath, +simultaneous)
+// await downloadFile(coverURL, `${albumPath}/cover.jpg`)
