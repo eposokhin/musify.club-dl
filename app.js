@@ -156,4 +156,4 @@ const tracksToDownload = trackNumbers ? filterTracks(tracksDataCleaned) : tracks
 
 await prepareAlbumDir(albumPath)
 await downloadTracks(tracksToDownload, albumPath, +simultaneous)
-// await downloadFile(coverURL, `${albumPath}/cover.jpg`)
+await downloadFile(coverURL, `${albumPath}/cover.jpg`)
