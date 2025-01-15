@@ -42,29 +42,42 @@ function getLinksAndTags(html, domain) {
     const tracksData = []
     const $tracks = $('.playlist__item')
     const coverURL = $('.album-img').attr('data-src')
-
+    
     $tracks.each((index, element) => {
         let trackNo = $(element)
-            .find('.playlist__position')
-            .text()
-            .trim()
+        .find('.playlist__position')
+        .text()
+        .trim()
         if (trackNo.length < 2) trackNo = '0' + trackNo
-
+        
         tracksData.push({
             url: `https://${domain}${$(element)
                 .find('.playlist__control.play')
-                .attr('data-url')}`,
-            trackNo,
-            title: $(element)
+                .attr('data-url') || restoreRemovedSongUrl($(element))}`,
+                trackNo,
+                title: $(element)
                 .find('.playlist__details a.strong')
                 .text()
                 .trim(),
-            artist,
-            album
+                artist,
+                album
+            })
         })
-    })
 
     return { tracksData, coverURL }
+}
+
+function restoreRemovedSongUrl(songElement) {
+    const href = songElement
+    .find('.playlist__heading')
+    .find('.strong')
+    .attr('href')
+    .split('/')
+    .at(-1)
+    const songId = href.split('-').at(-1)
+    const songRawName = href.split('-').slice(0, -1).join('-') + '.mp3'
+    
+    return `/track/play/${songId}/${songRawName}`
 }
 
 async function prepareAlbumDir(path) {
