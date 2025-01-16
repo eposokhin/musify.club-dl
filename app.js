@@ -42,9 +42,12 @@ function parseAldumData(html, domain) {
     const coverURL = $('.album-img').attr('data-src')
 
     const tracks = []
-    const $tracks = $('.playlist__item')
-    $tracks.each((index, element) => {
-        let trackNo = $(element)
+    const $items = $('.playlist__item')
+    
+    $items.each((index, element) => {
+        const $item = $(element)
+        
+        let trackNo = $item
             .find('.playlist__position')
             .text()
             .trim()
@@ -52,13 +55,13 @@ function parseAldumData(html, domain) {
 
         tracks.push({
             trackNo,
-            title: $(element)
+            title: $item
                 .find('.playlist__details a.strong')
                 .text()
                 .trim(),
-            url: `https://${domain}${$(element)
+            url: `https://${domain}${$item
                 .find('.playlist__control.play')
-                .attr('data-url') || restoreRemovedSongUrl($(element))}`
+                .attr('data-url') || restoreRemovedSongUrl($item)}`
         })
     })
 
