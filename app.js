@@ -31,52 +31,50 @@ const config = {
 
 const cleanUpSymbols = inputString => inputString.replace(/[:/"*<>|?]/g, '')
 
-function getLinksAndTags(html, domain) {
+function parseAldumData(html, domain) {
     const $ = cheerio.load(html)
 
-    const [album, artist = 'VA'] = $('h1')
+    const [artist = 'VA', album] = $('h1')
         .text()
         .trim()
         .split(' - ', 2)
-        .reverse()
-    const tracksData = []
-    const $tracks = $('.playlist__item')
+
     const coverURL = $('.album-img').attr('data-src')
-    
+
+    const tracks = []
+    const $tracks = $('.playlist__item')
     $tracks.each((index, element) => {
         let trackNo = $(element)
-        .find('.playlist__position')
-        .text()
-        .trim()
+            .find('.playlist__position')
+            .text()
+            .trim()
         if (trackNo.length < 2) trackNo = '0' + trackNo
-        
-        tracksData.push({
-            url: `https://${domain}${$(element)
-                .find('.playlist__control.play')
-                .attr('data-url') || restoreRemovedSongUrl($(element))}`,
-                trackNo,
-                title: $(element)
+
+        tracks.push({
+            trackNo,
+            title: $(element)
                 .find('.playlist__details a.strong')
                 .text()
                 .trim(),
-                artist,
-                album
-            })
+            url: `https://${domain}${$(element)
+                .find('.playlist__control.play')
+                .attr('data-url') || restoreRemovedSongUrl($(element))}`
         })
+    })
 
-    return { tracksData, coverURL }
+    return { artist, album, coverURL, tracks }
 }
 
 function restoreRemovedSongUrl(songElement) {
     const href = songElement
-    .find('.playlist__heading')
-    .find('.strong')
-    .attr('href')
-    .split('/')
-    .at(-1)
+        .find('.playlist__heading')
+        .find('.strong')
+        .attr('href')
+        .split('/')
+        .at(-1)
     const songId = href.split('-').at(-1)
     const songRawName = href.split('-').slice(0, -1).join('-') + '.mp3'
-    
+
     return `/track/play/${songId}/${songRawName}`
 }
 
@@ -145,18 +143,21 @@ const domain = new URL(albumURL).hostname
 
 const siteResponse = await fetch(albumURL)
 const albumPage = await siteResponse.text()
-const { tracksData, coverURL } = getLinksAndTags(albumPage, domain)
+const albumData = parseAldumData(albumPage, domain)
 
-const tracksDataCleaned = tracksData.map(track => {
-    return {
-        ...track,
-        title: cleanUpSymbols(track.title),
-        artist: cleanUpSymbols(track.artist),
-        album: cleanUpSymbols(track.album)
-    }
-})
+const albumDataCleaned = {
+    ...albumData,
+    artist: cleanUpSymbols(albumData.artist),
+    album: cleanUpSymbols(albumData.album),
+    tracks: albumData.tracks.map(track => {
+        return {
+            ...track,
+            title: cleanUpSymbols(track.title)
+        }
+    })
+}
 
-const albumPath = `${path}/${tracksDataCleaned[0].artist}/${tracksDataCleaned[0].album}`
+const albumPath = `${path}/${albumDataCleaned.artist}/${albumDataCleaned.album}`
 
 const filterTracks = tracks => tracks
     .filter(track => trackNumbers
@@ -165,8 +166,8 @@ const filterTracks = tracks => tracks
         .includes(parseInt(track.trackNo))
     )
 
-const tracksToDownload = trackNumbers ? filterTracks(tracksDataCleaned) : tracksDataCleaned
+const tracksToDownload = trackNumbers ? filterTracks(albumDataCleaned.tracks) : albumDataCleaned.tracks
 
 await prepareAlbumDir(albumPath)
 await downloadTracks(tracksToDownload, albumPath, +simultaneous)
-await downloadFile(coverURL, `${albumPath}/cover.jpg`)
+await downloadFile(albumDataCleaned.coverURL, `${albumPath}/cover.jpg`)
