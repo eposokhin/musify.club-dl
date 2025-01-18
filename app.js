@@ -16,13 +16,13 @@ const config = {
             short: 'p',
             default: `${process.env.HOME}/Music`
         },
-        trackNumbers: {
+        track: {
             type: 'string',
             short: 't'
         },
-        simultaneous: {
+        fetches: {
             type: 'string',
-            short: 's',
+            short: 'f',
             default: '5'
         }
     },
@@ -31,7 +31,7 @@ const config = {
 
 const cleanUpSymbols = inputString => inputString.replace(/[:/"*<>|?]/g, '')
 
-function parseAldumData(html, domain) {
+function parseAlbumData(html, domain) {
     const $ = cheerio.load(html)
 
     const [artist = 'VA', album] = $('h1')
@@ -136,8 +136,8 @@ async function downloadTracks(tracks, path, simNum) {
 const parsedArgs = parseArgs(config)
 const {
     path,
-    simultaneous,
-    trackNumbers
+    fetches,
+    track: trackNumbers
 } = parsedArgs.values
 
 const albumURL = parsedArgs.positionals[0]
@@ -146,7 +146,7 @@ const domain = new URL(albumURL).hostname
 
 const siteResponse = await fetch(albumURL)
 const albumPage = await siteResponse.text()
-const albumData = parseAldumData(albumPage, domain)
+const albumData = parseAlbumData(albumPage, domain)
 
 const albumDataCleaned = {
     ...albumData,
@@ -172,5 +172,5 @@ const filterTracks = tracks => tracks
 const tracksToDownload = trackNumbers ? filterTracks(albumDataCleaned.tracks) : albumDataCleaned.tracks
 
 await prepareAlbumDir(albumPath)
-await downloadTracks(tracksToDownload, albumPath, +simultaneous)
+await downloadTracks(tracksToDownload, albumPath, +fetches)
 await downloadFile(albumDataCleaned.coverURL, `${albumPath}/cover.jpg`)
