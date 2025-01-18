@@ -4,6 +4,7 @@ import { mkdir, open, rm } from 'node:fs/promises'
 import { URL } from 'node:url'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
+import { exit, env } from 'node:process'
 
 const config = {
     options: {
@@ -14,7 +15,7 @@ const config = {
         path: {
             type: 'string',
             short: 'p',
-            default: `${process.env.HOME}/Music`
+            default: `${env.HOME}/Music`
         },
         track: {
             type: 'string',
@@ -27,6 +28,20 @@ const config = {
         }
     },
     allowPositionals: true
+}
+
+const helpOptions = {
+    help: 'Shows this message',
+    path: 'Specify directory to download music into',
+    track: 'Specify a track by its number in album to download. Can be many values separated by comma',
+    fetches: 'How many tracks to download at the same time. Default 5'
+}
+
+function showHelp(options) {
+    console.info(`Usage: THIS_PROGRAM [OPTIONS...] ALBUM_URL`)
+    Object.entries(options).forEach(([key, value]) => {
+        console.info(` -${config.options[key].short}, --${key}\t${value}`)
+    })
 }
 
 const cleanUpSymbols = inputString => inputString.replace(/[:/"*<>|?]/g, '')
@@ -43,10 +58,10 @@ function parseAlbumData(html, domain) {
 
     const tracks = []
     const $items = $('.playlist__item')
-    
+
     $items.each((index, element) => {
         const $item = $(element)
-        
+
         let trackNo = $item
             .find('.playlist__position')
             .text()
@@ -135,10 +150,16 @@ async function downloadTracks(tracks, path, simNum) {
 
 const parsedArgs = parseArgs(config)
 const {
+    help,
     path,
     fetches,
     track: trackNumbers
 } = parsedArgs.values
+
+if (help) {
+    showHelp(helpOptions)
+    exit(0)
+}
 
 const albumURL = parsedArgs.positionals[0]
 
