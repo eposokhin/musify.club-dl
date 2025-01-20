@@ -49,14 +49,11 @@ const cleanUpSymbols = inputString => inputString.replace(/[:/"*<>|?]/g, '')
 function parseAlbumData(html) {
     const $ = cheerio.load(html)
 
-    const [artist = 'VA', album] = $('h1').text().trim().split(' - ', 2)
+    const [artist, album] = $('h1').text().trim().split(' - ', 2)
 
     const coverURL = $('.album-img').attr('data-src')
 
-    const tracks = []
-    const $items = $('.playlist__item')
-
-    $items.each((index, element) => {
+    const parseTracks = (index, element) => {
         const $item = $(element)
 
         const trackNo = $item.find('.playlist__position').text().trim().padStart(2, '0')
@@ -64,13 +61,9 @@ function parseAlbumData(html) {
         const path = $item
             .find('.playlist__control.play').attr('data-url') || restoreSongPath($item)
 
-        const track = {
-            trackNo,
-            title,
-            path
-        }
-        tracks.push(track)
-    })
+        return { trackNo, title, path }
+    }
+    const tracks = $('.playlist__item').map(parseTracks).toArray()
 
     return { artist, album, coverURL, tracks }
 }
@@ -156,7 +149,6 @@ if (help) {
 
 const albumURL = new URL(parsedArgs.positionals[0])
 
-console.log('Reaching the music service')
 const siteResponse = await fetch(albumURL)
 const albumPage = await siteResponse.text()
 const albumData = parseAlbumData(albumPage)
