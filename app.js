@@ -46,13 +46,10 @@ function showHelp(options) {
 
 const cleanUpSymbols = inputString => inputString.replace(/[:/"*<>|?]/g, '')
 
-function parseAlbumData(html, domain) {
+function parseAlbumData(html) {
     const $ = cheerio.load(html)
 
-    const [artist = 'VA', album] = $('h1')
-        .text()
-        .trim()
-        .split(' - ', 2)
+    const [artist = 'VA', album] = $('h1').text().trim().split(' - ', 2)
 
     const coverURL = $('.album-img').attr('data-src')
 
@@ -62,28 +59,23 @@ function parseAlbumData(html, domain) {
     $items.each((index, element) => {
         const $item = $(element)
 
-        let trackNo = $item
-            .find('.playlist__position')
-            .text()
-            .trim()
-        if (trackNo.length < 2) trackNo = '0' + trackNo
+        const trackNo = $item.find('.playlist__position').text().trim().padStart(2, '0')
+        const title = $item.find('.playlist__details a.strong').text().trim()
+        const path = $item
+            .find('.playlist__control.play').attr('data-url') || restoreSongPath($item)
 
-        tracks.push({
+        const track = {
             trackNo,
-            title: $item
-                .find('.playlist__details a.strong')
-                .text()
-                .trim(),
-            url: `https://${domain}${$item
-                .find('.playlist__control.play')
-                .attr('data-url') || restoreRemovedSongUrl($item)}`
-        })
+            title,
+            path
+        }
+        tracks.push(track)
     })
 
     return { artist, album, coverURL, tracks }
 }
 
-function restoreRemovedSongUrl(songElement) {
+function restoreSongPath(songElement) {
     const href = songElement
         .find('.playlist__heading')
         .find('.strong')
@@ -140,7 +132,8 @@ async function downloadTracks(tracks, path, simNum) {
 
     const pending = toDownload.map(async track => {
         const filename = `${path}/${track.trackNo} - ${track.title}.mp3`
-        await downloadFile(track.url, filename)
+        const url = new URL(track.path, albumURL.origin)
+        await downloadFile(url, filename)
     })
 
     await Promise.all(pending)
@@ -161,13 +154,14 @@ if (help) {
     exit(0)
 }
 
-const albumURL = parsedArgs.positionals[0]
+const albumURL = new URL(parsedArgs.positionals[0])
 
-const domain = new URL(albumURL).hostname
-
+console.log('Reaching the music service')
 const siteResponse = await fetch(albumURL)
 const albumPage = await siteResponse.text()
-const albumData = parseAlbumData(albumPage, domain)
+const albumData = parseAlbumData(albumPage)
+
+console.log(albumData)
 
 const albumDataCleaned = {
     ...albumData,
