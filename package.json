@@ -1,5 +1,5 @@
 {
-  "name": "y",
+  "name": "musify.club-dl",
   "version": "1.1.0",
   "description": "A piece of software to download music from musify.club",
   "main": "app.js",
