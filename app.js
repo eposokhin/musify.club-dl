@@ -153,8 +153,6 @@ const siteResponse = await fetch(albumURL)
 const albumPage = await siteResponse.text()
 const albumData = parseAlbumData(albumPage)
 
-console.log(albumData)
-
 const albumDataCleaned = {
     ...albumData,
     artist: cleanUpSymbols(albumData.artist),
