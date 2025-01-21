@@ -5,6 +5,7 @@ import { URL } from 'node:url'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { exit, env } from 'node:process'
+import { basename } from 'node:path'
 
 const config = {
     options: {
@@ -30,6 +31,7 @@ const config = {
     allowPositionals: true
 }
 
+const programName = basename(process.argv[1])
 const helpOptions = {
     help: 'Shows this message',
     path: 'Specify directory to download music into',
@@ -38,7 +40,7 @@ const helpOptions = {
 }
 
 function showHelp(options) {
-    console.info(`Usage: THIS_PROGRAM [OPTIONS...] ALBUM_URL`)
+    console.info(`Usage: ${programName} [OPTIONS...] ALBUM_URL`)
     Object.entries(options).forEach(([key, value]) => {
         console.info(` -${config.options[key].short}, --${key}\t${value}`)
     })
@@ -135,20 +137,37 @@ async function downloadTracks(tracks, path, simNum) {
     return downloadTracks(tracks.slice(simNum), path, simNum)
 }
 
-const parsedArgs = parseArgs(config)
+function validateArgs(parseArgs, config) {
+    try {
+        const parsedArgs = parseArgs(config)
+        if (!parsedArgs.positionals[0]) {
+            console.error('Album URL is not provided!')
+            console.info(`See '${programName} --help'`)
+            exit(1)
+        }
+        return parsedArgs
+    } catch (error) {
+        console.error(error.message.split('.')[0])
+        console.info(`See '${programName} --help'`)
+        exit(1)
+    }
+}
+
+const validArgs = validateArgs(parseArgs, config)
+
 const {
     help,
     path,
     fetches,
     track: trackNumbers
-} = parsedArgs.values
+} = validArgs.values
 
 if (help) {
     showHelp(helpOptions)
     exit(0)
 }
 
-const albumURL = new URL(parsedArgs.positionals[0])
+const albumURL = new URL(validArgs.positionals[0])
 
 const siteResponse = await fetch(albumURL)
 const albumPage = await siteResponse.text()
