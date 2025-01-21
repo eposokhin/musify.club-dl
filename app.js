@@ -49,7 +49,8 @@ const cleanUpSymbols = inputString => inputString.replace(/[:/"*<>|?]/g, '')
 function parseAlbumData(html) {
     const $ = cheerio.load(html)
 
-    const [artist, album] = $('h1').text().trim().split(' - ', 2)
+    const [album, artist = 'Collections'] = $('h1')
+        .text().trim().split(' - ', 2).toReversed()
 
     const coverURL = $('.album-img').attr('data-src')
 
