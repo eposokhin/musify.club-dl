@@ -140,7 +140,7 @@ async function downloadTracks(tracks, path, simNum) {
 function validateArgs(parseArgs, config) {
     try {
         const parsedArgs = parseArgs(config)
-        if (!parsedArgs.positionals[0]) {
+        if (!parsedArgs.values.help && !parsedArgs.positionals[0]) {
             console.error('Album URL is not provided!')
             console.info(`See '${programName} --help'`)
             exit(1)
