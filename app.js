@@ -79,7 +79,7 @@ function restoreSongPath(songElement) {
     const songId = href.split('-').at(-1)
     const songRawName = href.split('-').slice(0, -1).join('-') + '.mp3'
 
-    return `/track/play/${songId}/${songRawName}`
+    return `/track/pl/${songId}/${songRawName}`
 }
 
 async function prepareAlbumDir(path) {
