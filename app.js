@@ -52,7 +52,7 @@ function parseAlbumData(html) {
     const [album, artist = 'Collections'] = $('h1')
         .text().trim().split(' - ', 2).toReversed()
 
-    const coverURL = $('.album-img').attr('data-src')
+    const coverURL = $('.album-img').attr('src')
 
     const parseTracks = (index, element) => {
         const $item = $(element)
