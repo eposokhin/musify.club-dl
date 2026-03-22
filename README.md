@@ -14,17 +14,10 @@ A command-line interface (CLI) program for downloading music from [musify.club](
 
 1. **Prerequisites**: Ensure you have Node.js (version 21 or later) installed on your system.
 
-2. **Clone the Repository**:
+2. **Install via npm**
 
     ```bash
-    git clone https://github.com/eposokhin/musify.club-dl
-    cd musify.club-dl
-    ```
-
-3. **Install Dependencies**:
-
-    ```bash
-    npm ci
+    npm install musify.club-dl -g
     ```
 
 ## Usage
@@ -34,13 +27,13 @@ A command-line interface (CLI) program for downloading music from [musify.club](
 Download an entire album:
 
 ```bash
-node app.js https://musify.club/some_album_url
+musify https://musify.club/some_album_url
 ```
 
 ### Options
 
 ```plaintext
-Usage: app.js [OPTIONS...] ALBUM_URL
+Usage: musify [OPTIONS...] ALBUM_URL
  -h, --help     Shows this message
  -p, --path     Specify directory to download music into (default: ~/Music)
  -t, --track    Specify a track by its number in the album to download. Can be multiple values separated by comma
@@ -52,17 +45,34 @@ Usage: app.js [OPTIONS...] ALBUM_URL
 - Download specific tracks from an album:
 
     ```bash
-    node app.js https://musify.club/some_album_url --track 1,3,5
+    musify https://musify.club/some_album_url --track 1,3,5
     ```
 
 - Specify a download directory:
 
     ```bash
-    node app.js https://musify.club/some_album_url --path /path/to/directory
+    musify https://musify.club/some_album_url --path /path/to/directory
     ```
 
 - Increase concurrent downloads:
 
     ```bash
-    node app.js https://musify.club/some_album_url --fetches 10
+    musify https://musify.club/some_album_url --fetches 10
+    ```
+
+## Contributing
+
+1. **Prerequisites**: Ensure you have Node.js (version 21 or later) installed on your system.
+
+2. **Clone the Repository**:
+
+    ```bash
+    git clone https://github.com/eposokhin/musify.club-dl
+    cd musify.club-dl
+    ```
+
+3. **Install Dependencies**:
+
+    ```bash
+    npm ci
     ```
