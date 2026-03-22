@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import * as cheerio from 'cheerio'
 import { parseArgs } from 'node:util'
 import { mkdir, open, rm } from 'node:fs/promises'

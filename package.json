@@ -1,9 +1,16 @@
 {
   "name": "musify.club-dl",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "A piece of software to download music from musify.club",
   "main": "app.js",
   "type": "module",
+  "bin": {
+    "musify": "./app.js"
+  },
+  "keywords": [
+    "cli",
+    "downloader"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
